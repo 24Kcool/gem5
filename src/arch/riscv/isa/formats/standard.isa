@@ -82,7 +82,7 @@ def template ImmExecute {{
         ss << mnemonic << ' ';
         for (const RegId& idx: indices)
             ss << registerName(idx) << ", ";
-        ss << imm;
+        ss << (int)(imm);
         return ss.str();
     }
 }};

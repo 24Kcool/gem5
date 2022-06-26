@@ -126,17 +126,21 @@ decode QUADRANT default Unknown::unknown() {
                 }
                 Rc1_sd = Rc1_sd + imm;
             }});
-            0x1: c_addiw({{
-                imm = CIMM5;
-                if (CIMM1 > 0)
-                    imm |= ~((uint64_t)0x1F);
-            }}, {{
-                if (RC1 == 0) {
-                    return std::make_shared<IllegalInstFault>(
-                            "source reg x0", machInst);
-                }
-                Rc1_sw = (int32_t)(Rc1_sw + imm);
-            }});
+//            0x1: c_addiw({{
+//                imm = CIMM5;
+//                if (CIMM1 > 0)
+//                    imm |= ~((uint64_t)0x1F);
+//            }}, {{
+//                if (RC1 == 0) {
+//                    return std::make_shared<IllegalInstFault>(
+//                            "source reg x0", machInst);
+//                }
+//                Rc1_sw = (int32_t)(Rc1_sw + imm);
+//            }});
+            0x1: CJOp::c_jal({{
+                ra = NPC;
+                NPC = PC + imm;
+            }}, IsDirectControl, IsUncondControl, IsCall);
             0x2: c_li({{
                 imm = CIMM5;
                 if (CIMM1 > 0)
@@ -189,7 +193,7 @@ decode QUADRANT default Unknown::unknown() {
                         return std::make_shared<IllegalInstFault>(
                                 "immediate = 0", machInst);
                     }
-                    Rp1 = Rp1 >> imm;
+                    Rp1 = int32_t(uint32_t(Rp1) >> imm);
                 }}, uint64_t);
                 0x1: c_srai({{
                     imm = CIMM5 | (CIMM1 << 5);
@@ -494,7 +498,7 @@ decode QUADRANT default Unknown::unknown() {
                 }}, uint64_t);
                 0x5: decode FS3 {
                     0x0: srli({{
-                        Rd = Rs1 >> imm;
+                        Rd = int32_t(Rs1_uw >> imm);
                     }}, imm_type = uint64_t, imm_code = {{ imm = SHAMT6; }});
                     0x5: orcb({{
                         Rd = 0;
@@ -1720,42 +1724,42 @@ decode QUADRANT default Unknown::unknown() {
         0x18: decode FUNCT3 {
             format BOp {
                 0x0: beq({{
-                    if (Rs1 == Rs2) {
+                    if (Rs1_uw == Rs2_uw) {
                         NPC = PC + imm;
                     } else {
                         NPC = NPC;
                     }
                 }}, IsDirectControl, IsCondControl);
                 0x1: bne({{
-                    if (Rs1 != Rs2) {
+                    if (Rs1_uw != Rs2_uw) {
                         NPC = PC + imm;
                     } else {
                         NPC = NPC;
                     }
                 }}, IsDirectControl, IsCondControl);
                 0x4: blt({{
-                    if (Rs1_sd < Rs2_sd) {
+                    if (Rs1_sw < Rs2_sw) {
                         NPC = PC + imm;
                     } else {
                         NPC = NPC;
                     }
                 }}, IsDirectControl, IsCondControl);
                 0x5: bge({{
-                    if (Rs1_sd >= Rs2_sd) {
+                    if (Rs1_sw >= Rs2_sw) {
                         NPC = PC + imm;
                     } else {
                         NPC = NPC;
                     }
                 }}, IsDirectControl, IsCondControl);
                 0x6: bltu({{
-                    if (Rs1 < Rs2) {
+                    if (Rs1_uw < Rs2_uw ) {
                         NPC = PC + imm;
                     } else {
                         NPC = NPC;
                     }
                 }}, IsDirectControl, IsCondControl);
                 0x7: bgeu({{
-                    if (Rs1 >= Rs2) {
+                    if (Rs1_uw >= Rs2_uw) {
                         NPC = PC + imm;
                     } else {
                         NPC = NPC;
